@@ -73,3 +73,25 @@ Single-file HTML app — no automated test suite. Verified changes via code revi
 
 ### Verdict
 **ship**
+
+## [Coder] 2026-04-23 01:29
+
+### Task
+Make the app installable as a Progressive Web App (PWA) with iOS Safari support.
+
+### Changes
+- manifest.json: Created web app manifest with name, icons, theme_color (#0a0a1a), background_color, display: standalone.
+- sw.js: Created service worker with cache-first strategy for offline support. Caches index.html, manifest, and icons.
+- icon-192.svg, icon-512.svg: SVG icons with gradient background and lock emoji matching the app's color scheme.
+- icon-192.png, icon-512.png: PNG versions generated from SVGs via ImageMagick for broader compatibility.
+- index.html: Added `<link rel="manifest">`, `<meta name="theme-color">`, iOS meta tags (apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style), `<link rel="apple-touch-icon">`, and service worker registration script.
+
+### Tests
+- Validated manifest.json parses as valid JSON.
+- Verified all meta tags and SW registration present in index.html via grep.
+- No automated test suite exists for this project.
+
+### Notes
+- Icons use SVG with emoji which renders well on most platforms. PNG fallbacks generated for iOS compatibility.
+- Service worker caches the core assets on install; uses cache-first, network-fallback fetch strategy.
+- `apple-mobile-web-app-status-bar-style` set to `black-translucent` to match the dark theme.
