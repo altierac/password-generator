@@ -95,3 +95,19 @@ Make the app installable as a Progressive Web App (PWA) with iOS Safari support.
 - Icons use SVG with emoji which renders well on most platforms. PNG fallbacks generated for iOS compatibility.
 - Service worker caches the core assets on install; uses cache-first, network-fallback fetch strategy.
 - `apple-mobile-web-app-status-bar-style` set to `black-translucent` to match the dark theme.
+
+## [Coder] 2026-04-23 01:32
+
+### Task
+Create README.md for the project and update the GitHub repo description.
+
+### Changes
+- README.md: Created with project name, description, features list, live demo link (Azure Static Web Apps URL extracted from deploy logs), PWA install instructions, tech stack, privacy note, and project structure.
+- GitHub repo: Updated description to "Secure client-side password generator — passwords, passphrases & PINs in your browser. No external requests." and set homepage to the Azure Static Web Apps URL.
+
+### Tests
+No automated tests. Verified README content and repo description update via `gh repo edit`.
+
+### Notes
+- Live demo URL (`https://red-flower-08bc4e403.7.azurestaticapps.net`) was extracted from the most recent deploy workflow logs.
+- Added MIT license mention in README — confirm this matches your intent or remove if no license file exists.
