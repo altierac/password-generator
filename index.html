@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a1a;
+  --surface: #12122a;
+  --surface-2: #1a1a3e;
+  --surface-3: #222255;
+  --border: rgba(255,255,255,0.08);
+  --text: #e8e8f0;
+  --text-dim: #8888aa;
+  --accent: #6366f1;
+  --accent-2: #8b5cf6;
+  --gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+  --gradient-hover: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
+  --weak: #ef4444;
+  --fair: #f59e0b;
+  --strong: #22c55e;
+  --very-strong: #06b6d4;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  line-height: 1.5;
+}
+
+.container {
+  width: 100%;
+  max-width: 560px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+/* === PASSWORD DISPLAY === */
+.password-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.password-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gradient);
+}
+
+.password-display {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.6;
+  min-height: 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  color: #f0f0ff;
+  user-select: all;
+  transition: opacity var(--transition);
+}
+
+.password-display.refreshing {
+  opacity: 0.3;
+}
+
+.password-display .char-upper { color: #818cf8; }
+.password-display .char-digit { color: #f59e0b; }
+.password-display .char-symbol { color: #f472b6; }
+
+/* Strength bar */
+.strength-section {
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.strength-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.strength-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.strength-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Action buttons row */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--gradient);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--gradient-hover); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.35); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--surface-3); border-color: rgba(255,255,255,0.15); }
+
+.btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.btn .btn-label { transition: opacity var(--transition); }
+.btn .btn-check { position: absolute; opacity: 0; transition: opacity var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+.btn.copied .btn-label { opacity: 0; }
+.btn.copied .btn-check { opacity: 1; }
+
+/* === TABS === */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border);
+}
+
+.tab {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all var(--transition);
+}
+
+.tab:hover { color: var(--text); }
+.tab.active {
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(99,102,241,0.3);
+}
+
+/* === SETTINGS PANEL === */
+.settings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+}
+
+.setting-row + .setting-row { border-top: 1px solid var(--border); }
+
+.setting-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.setting-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-2);
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+/* Range slider */
+.slider-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: var(--radius-pill);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gradient);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+  cursor: pointer;
+  transition: transform var(--transition);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gradient);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+  cursor: pointer;
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.toggle input:checked + .toggle-track {
+  background: var(--accent);
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.toggle input:checked + .toggle-track::after {
+  transform: translateX(20px);
+}
+
+/* Separator selector */
+.separator-options {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sep-btn {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.sep-btn:hover { border-color: var(--accent); color: var(--text); }
+.sep-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface-2);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(99,102,241,0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Footer */
+.footer {
+  margin-top: 2.5rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 480px) {
+  body { padding: 1.25rem 0.75rem; }
+  .password-display { font-size: 1.15rem; }
+  .actions { flex-direction: column; }
+  h1 { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Password Generator</h1>
+  <p class="subtitle">Create strong, secure passwords instantly</p>
+
+  <!-- Password Display -->
+  <div class="password-card">
+    <div class="password-display" id="passwordDisplay"></div>
+    <div class="strength-section">
+      <div class="strength-bar-track">
+        <div class="strength-bar-fill" id="strengthBar"></div>
+      </div>
+      <span class="strength-label" id="strengthLabel">—</span>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="copyBtn" onclick="copyPassword()">
+        <span class="btn-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </span>
+        <span class="btn-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Copied!
+        </span>
+      </button>
+      <button class="btn btn-secondary" onclick="regenerate()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Regenerate
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-type="random" onclick="switchTab('random', this)">Random</button>
+    <button class="tab" data-type="memorable" onclick="switchTab('memorable', this)">Memorable</button>
+    <button class="tab" data-type="pin" onclick="switchTab('pin', this)">PIN</button>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings">
+    <!-- Random password settings -->
+    <div id="randomSettings">
+      <div class="setting-row slider-row">
+        <div class="slider-header">
+          <span class="setting-label">Length</span>
+          <span class="setting-value" id="lengthValue">20</span>
+        </div>
+        <input type="range" id="lengthSlider" min="8" max="128" value="20" oninput="updateLength(this.value)">
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Uppercase (A-Z)</span>
+        <label class="toggle"><input type="checkbox" id="upperToggle" checked onchange="generate()"><span class="toggle-track"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Lowercase (a-z)</span>
+        <label class="toggle"><input type="checkbox" id="lowerToggle" checked onchange="generate()"><span class="toggle-track"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Digits (0-9)</span>
+        <label class="toggle"><input type="checkbox" id="digitToggle" checked onchange="generate()"><span class="toggle-track"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Symbols (!@#$…)</span>
+        <label class="toggle"><input type="checkbox" id="symbolToggle" checked onchange="generate()"><span class="toggle-track"></span></label>
+      </div>
+    </div>
+
+    <!-- Memorable password settings -->
+    <div id="memorableSettings" style="display:none;">
+      <div class="setting-row slider-row">
+        <div class="slider-header">
+          <span class="setting-label">Words</span>
+          <span class="setting-value" id="wordCountValue">4</span>
+        </div>
+        <input type="range" id="wordCountSlider" min="3" max="10" value="4" oninput="updateWordCount(this.value)">
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Separator</span>
+        <div class="separator-options" id="separatorOptions">
+          <button class="sep-btn active" data-sep="-" onclick="setSeparator('-', this)">-</button>
+          <button class="sep-btn" data-sep="." onclick="setSeparator('.', this)">.</button>
+          <button class="sep-btn" data-sep=" " onclick="setSeparator(' ', this)">␣</button>
+          <button class="sep-btn" data-sep="_" onclick="setSeparator('_', this)">_</button>
+          <button class="sep-btn" data-sep="," onclick="setSeparator(',', this)">,</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Capitalize</span>
+        <label class="toggle"><input type="checkbox" id="capitalizeToggle" checked onchange="generate()"><span class="toggle-track"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Include number</span>
+        <label class="toggle"><input type="checkbox" id="includeNumberToggle" checked onchange="generate()"><span class="toggle-track"></span></label>
+      </div>
+    </div>
+
+    <!-- PIN settings -->
+    <div id="pinSettings" style="display:none;">
+      <div class="setting-row slider-row">
+        <div class="slider-header">
+          <span class="setting-label">PIN Length</span>
+          <span class="setting-value" id="pinLengthValue">6</span>
+        </div>
+        <input type="range" id="pinLengthSlider" min="4" max="12" value="6" oninput="updatePinLength(this.value)">
+      </div>
+    </div>
+  </div>
+
+  <p class="footer">Passwords are generated locally using <code>crypto.getRandomValues()</code>.<br>Nothing leaves your browser.</p>
+</div>
+
+<div class="toast" id="toast">✓ Copied to clipboard</div>
+
+<script>
+// Word list for memorable passwords (EFF short list subset — 1000+ common words)
+const WORDS = [
+  "about","above","acid","admit","adult","after","again","agree","ahead","alarm",
+  "album","alert","alien","alive","allow","alone","alpha","alter","amaze","among",
+  "ample","angel","anger","angle","angry","ankle","apart","apple","apply","arena",
+  "argue","arise","armor","army","array","arrow","aside","asset","atom","audio",
+  "avoid","awake","award","aware","bacon","badge","bagel","baker","basic","basin",
+  "batch","beach","beard","beast","begin","being","belly","below","bench","berry",
+  "birth","blade","blame","blank","blast","blaze","bleed","blend","bless","blind",
+  "blink","bliss","block","blood","bloom","blown","blues","blunt","blush","board",
+  "bonus","boost","booth","bound","brain","brand","brave","bread","break","brick",
+  "bride","brief","bring","brisk","broad","broke","brook","brown","brush","buddy",
+  "build","bunch","burst","cabin","cable","candy","cargo","carry","catch","cause",
+  "cedar","chain","chair","chalk","champ","charm","chase","cheap","check","cheek",
+  "chess","chest","chief","child","chill","china","chord","chunk","civil","claim",
+  "class","clean","clear","clerk","cliff","climb","cling","clock","clone","close",
+  "cloth","cloud","coach","coast","coral","could","count","court","cover","crack",
+  "craft","crane","crash","crawl","crazy","cream","crime","crisp","cross","crowd",
+  "crown","crude","crush","cubic","curve","cycle","daily","dance","debug","decay",
+  "delay","delta","dense","depth","derby","desk","diary","digit","disco","ditch",
+  "dizzy","dodge","doing","donor","doubt","dough","draft","drain","drama","drank",
+  "drawn","dream","dress","drift","drill","drink","drive","drone","drove","drown",
+  "dying","eager","eagle","early","earth","eight","elect","elite","ember","empty",
+  "enemy","enjoy","enter","equal","equip","error","essay","evade","event","every",
+  "exact","exile","exist","extra","fable","facet","faith","false","fancy","fault",
+  "feast","fence","ferry","fetch","fever","fewer","fiber","field","fifty","fight",
+  "final","first","flame","flash","flesh","float","flock","flood","floor","flora",
+  "floss","flour","fluid","flush","focal","focus","force","forge","forth","forum",
+  "found","fox","frame","frank","fraud","fresh","front","frost","froze","fruit",
+  "giant","given","glad","glass","gleam","globe","gloom","glory","gloss","glove",
+  "going","grace","grade","grain","grand","grant","grape","graph","grasp","grass",
+  "grave","greed","green","greet","grief","grill","grind","groan","groom","gross",
+  "group","grove","grown","guard","guess","guest","guide","guilt","guise","happy",
+  "harsh","haven","heart","heavy","hence","herbs","hoist","honey","honor","horse",
+  "hotel","house","human","humor","humid","hurry","hyper","ideal","image","imply",
+  "inbox","index","indie","infer","inner","input","irony","ivory","jewel","joint",
+  "jolly","judge","juice","karma","kayak","kebab","kiosk","knack","kneel","knife",
+  "knock","known","label","labor","lance","large","laser","latch","later","layer",
+  "learn","lease","leave","legal","lemon","level","light","limit","linen","liner",
+  "liver","llama","lodge","logic","login","lucky","lunar","lunch","lyric","magic",
+  "manor","maple","march","match","maybe","mayor","media","mercy","merge","merit",
+  "metal","meter","might","minor","minus","mirth","model","money","month","moral",
+  "motor","mount","mouse","mouth","moved","movie","music","naive","nerve","never",
+  "noble","noise","north","noted","novel","nurse","nylon","occur","ocean","offer",
+  "often","olive","onion","opera","orbit","order","organ","other","outer","owner",
+  "oxide","ozone","paint","panda","panel","paper","party","pasta","patch","pause",
+  "peace","peach","pearl","pedal","penny","phase","phone","photo","piano","piece",
+  "pilot","pitch","pixel","pizza","place","plain","plane","plant","plate","plaza",
+  "plead","pluck","plumb","plume","plump","point","polar","poker","porch","pound",
+  "power","press","price","pride","prime","print","prior","prize","prone","proof",
+  "proud","prove","proxy","prune","pupil","purse","qualm","queen","query","quest",
+  "queue","quick","quiet","quota","quote","radar","radio","raise","rally","ranch",
+  "range","rapid","ratio","raven","reach","react","ready","realm","rebel","reign",
+  "relax","renew","reply","rider","ridge","rifle","right","rigid","risky","rival",
+  "river","roast","robin","robot","rocky","rogue","rough","round","route","royal",
+  "rugby","ruler","rural","saint","salad","salon","sandy","satin","sauce","sauna",
+  "scale","scene","scope","score","scout","scrap","sense","serum","serve","setup",
+  "seven","shade","shaft","shake","shame","shape","share","shark","sharp","sheep",
+  "sheer","sheet","shelf","shell","shift","shire","shirt","shock","shore","shout",
+  "sight","sigma","silly","since","sixty","skate","skill","skull","sleep","slice",
+  "slide","slope","smart","smell","smile","smoke","snack","snake","solar","solid",
+  "solve","sonic","sorry","south","space","spare","spark","speak","speed","spend",
+  "spice","spike","spine","spite","split","spoke","spoon","spray","squad","stack",
+  "staff","stage","stain","stair","stake","stale","stall","stamp","stand","stare",
+  "start","state","stays","steak","steam","steel","steep","steer","stern","stick",
+  "still","stock","stone","stood","store","storm","story","stout","stove","strip",
+  "stuff","style","sugar","suite","sunny","super","surge","swamp","sweet","swept",
+  "swift","swing","sword","syrup","table","taste","teach","tempo","theme","thick",
+  "thing","think","third","thorn","those","three","throw","thumb","tiger","tight",
+  "timer","toast","token","total","touch","tough","tower","toxic","trace","track",
+  "trade","trail","train","trait","trash","treat","trend","trial","tribe","trick",
+  "trust","truth","tumor","twist","ultra","uncle","under","union","unity","until",
+  "upper","upset","urban","usage","usher","usual","utter","valid","value","valve",
+  "vault","venue","verse","vigor","vinyl","viola","virus","visit","visor","vista",
+  "vital","vivid","vocal","vodka","voice","voter","wafer","wagon","waist","waste",
+  "watch","water","weary","weave","wedge","weird","wheat","wheel","where","which",
+  "while","white","whole","whose","widow","width","witch","woman","world","worry",
+  "worst","worth","would","wound","wrath","wrist","wrong","yacht","yield","young",
+  "youth","zebra","vigor","pixel","proxy","quota"
+];
+
+let currentType = 'random';
+let currentPassword = '';
+let separator = '-';
+
+function secureRandom(max) {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] % max;
+}
+
+function secureRandomFloat() {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] / 4294967296;
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = secureRandom(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateRandom() {
+  const length = parseInt(document.getElementById('lengthSlider').value);
+  const upper = document.getElementById('upperToggle').checked;
+  const lower = document.getElementById('lowerToggle').checked;
+  const digits = document.getElementById('digitToggle').checked;
+  const symbols = document.getElementById('symbolToggle').checked;
+
+  const charSets = [];
+  if (upper) charSets.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  if (lower) charSets.push('abcdefghijklmnopqrstuvwxyz');
+  if (digits) charSets.push('0123456789');
+  if (symbols) charSets.push('!@#$%^&*()_+-=[]{}|;:,.<>?');
+
+  if (charSets.length === 0) {
+    // Fallback: at least lowercase
+    document.getElementById('lowerToggle').checked = true;
+    charSets.push('abcdefghijklmnopqrstuvwxyz');
+  }
+
+  const allChars = charSets.join('');
+
+  // Ensure at least one character from each selected set
+  let result = [];
+  for (const set of charSets) {
+    result.push(set[secureRandom(set.length)]);
+  }
+
+  // Fill remaining length
+  for (let i = result.length; i < length; i++) {
+    result.push(allChars[secureRandom(allChars.length)]);
+  }
+
+  // Shuffle to avoid predictable positions for guaranteed chars
+  shuffleArray(result);
+
+  return result.join('');
+}
+
+function generateMemorable() {
+  const count = parseInt(document.getElementById('wordCountSlider').value);
+  const capitalize = document.getElementById('capitalizeToggle').checked;
+  const includeNumber = document.getElementById('includeNumberToggle').checked;
+
+  const words = [];
+  for (let i = 0; i < count; i++) {
+    let word = WORDS[secureRandom(WORDS.length)];
+    if (capitalize) {
+      word = word.charAt(0).toUpperCase() + word.slice(1);
+    }
+    words.push(word);
+  }
+
+  if (includeNumber) {
+    const pos = secureRandom(words.length + 1);
+    const num = secureRandom(1000);
+    words.splice(pos, 0, String(num));
+  }
+
+  return words.join(separator);
+}
+
+function generatePin() {
+  const length = parseInt(document.getElementById('pinLengthSlider').value);
+  let pin = '';
+  for (let i = 0; i < length; i++) {
+    pin += secureRandom(10).toString();
+  }
+  return pin;
+}
+
+function generate() {
+  const display = document.getElementById('passwordDisplay');
+
+  // Quick flash animation
+  display.classList.add('refreshing');
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      switch (currentType) {
+        case 'random': currentPassword = generateRandom(); break;
+        case 'memorable': currentPassword = generateMemorable(); break;
+        case 'pin': currentPassword = generatePin(); break;
+      }
+
+      renderPassword();
+      updateStrength();
+      display.classList.remove('refreshing');
+    }, 80);
+  });
+}
+
+function renderPassword() {
+  const display = document.getElementById('passwordDisplay');
+
+  if (currentType === 'random') {
+    // Colorize characters
+    let html = '';
+    for (const ch of currentPassword) {
+      if (/[A-Z]/.test(ch)) html += `<span class="char-upper">${escapeHtml(ch)}</span>`;
+      else if (/[0-9]/.test(ch)) html += `<span class="char-digit">${escapeHtml(ch)}</span>`;
+      else if (/[^a-z]/.test(ch)) html += `<span class="char-symbol">${escapeHtml(ch)}</span>`;
+      else html += escapeHtml(ch);
+    }
+    display.innerHTML = html;
+  } else {
+    display.textContent = currentPassword;
+  }
+}
+
+function escapeHtml(str) {
+  const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return str.replace(/[&<>"']/g, c => map[c]);
+}
+
+function calculateEntropy(password) {
+  if (!password) return 0;
+
+  if (currentType === 'memorable') {
+    const wordCount = parseInt(document.getElementById('wordCountSlider').value);
+    const includeNumber = document.getElementById('includeNumberToggle').checked;
+    // ~10 bits per word (1000 words), ~10 bits for number
+    let entropy = wordCount * Math.log2(WORDS.length);
+    if (includeNumber) entropy += Math.log2(1000) + Math.log2(wordCount + 1);
+    return entropy;
+  }
+
+  if (currentType === 'pin') {
+    return password.length * Math.log2(10);
+  }
+
+  // Random password
+  let poolSize = 0;
+  if (document.getElementById('upperToggle').checked) poolSize += 26;
+  if (document.getElementById('lowerToggle').checked) poolSize += 26;
+  if (document.getElementById('digitToggle').checked) poolSize += 10;
+  if (document.getElementById('symbolToggle').checked) poolSize += 26;
+
+  return poolSize > 0 ? password.length * Math.log2(poolSize) : 0;
+}
+
+function updateStrength() {
+  const entropy = calculateEntropy(currentPassword);
+  const bar = document.getElementById('strengthBar');
+  const label = document.getElementById('strengthLabel');
+
+  let strength, color, width;
+
+  if (entropy < 36) {
+    strength = 'Weak';
+    color = 'var(--weak)';
+    width = '25%';
+  } else if (entropy < 60) {
+    strength = 'Fair';
+    color = 'var(--fair)';
+    width = '50%';
+  } else if (entropy < 80) {
+    strength = 'Strong';
+    color = 'var(--strong)';
+    width = '75%';
+  } else {
+    strength = 'Very Strong';
+    color = 'var(--very-strong)';
+    width = '100%';
+  }
+
+  bar.style.width = width;
+  bar.style.background = color;
+  label.textContent = strength;
+  label.style.color = color;
+}
+
+function switchTab(type, el) {
+  currentType = type;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('randomSettings').style.display = type === 'random' ? '' : 'none';
+  document.getElementById('memorableSettings').style.display = type === 'memorable' ? '' : 'none';
+  document.getElementById('pinSettings').style.display = type === 'pin' ? '' : 'none';
+
+  generate();
+}
+
+function updateLength(val) {
+  document.getElementById('lengthValue').textContent = val;
+  generate();
+}
+
+function updateWordCount(val) {
+  document.getElementById('wordCountValue').textContent = val;
+  generate();
+}
+
+function updatePinLength(val) {
+  document.getElementById('pinLengthValue').textContent = val;
+  generate();
+}
+
+function setSeparator(sep, el) {
+  separator = sep;
+  document.querySelectorAll('.sep-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  generate();
+}
+
+async function copyPassword() {
+  const btn = document.getElementById('copyBtn');
+  try {
+    await navigator.clipboard.writeText(currentPassword);
+  } catch {
+    // Fallback for file:// protocol
+    const ta = document.createElement('textarea');
+    ta.value = currentPassword;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
+  btn.classList.add('copied');
+  showToast();
+  setTimeout(() => btn.classList.remove('copied'), 1500);
+}
+
+function showToast() {
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function regenerate() {
+  generate();
+}
+
+// Init
+generate();
+</script>
+
+</body>
+</html>
