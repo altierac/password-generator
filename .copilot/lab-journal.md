@@ -111,3 +111,51 @@ No automated tests. Verified README content and repo description update via `gh 
 ### Notes
 - Live demo URL (`https://red-flower-08bc4e403.7.azurestaticapps.net`) was extracted from the most recent deploy workflow logs.
 - Added MIT license mention in README — confirm this matches your intent or remove if no license file exists.
+
+## [Reviewer] 2026-04-23 01:40
+
+### Reviewed
+- `README.md`
+- `index.html`
+- `manifest.json`
+- `sw.js`
+- `.github/workflows/deploy.yml`
+- `icon-192.svg`
+- `icon-512.svg`
+- Prior review and fix history in `.copilot/lab-journal.md`
+
+### Issues
+- Severity: 🟡 should-fix
+- File and line reference: `sw.js:1-8`, `sw.js:24-27`
+- What the problem is: The service worker precaches `index.html` and serves it with a cache-first strategy under a hardcoded cache version (`pw-gen-v1`).
+- Why it matters: Because the whole app lives in `index.html`, existing installed users will stay on the cached app shell until someone manually edits `CACHE_NAME` in a later deploy. That can strand bug fixes and security updates behind stale cache state.
+- Suggested fix direction: Add an explicit update strategy for the app shell, such as bumping the cache version as part of each release or using a network-first/stale-while-revalidate approach for HTML/manifest while keeping cache-first only for truly static assets.
+
+- Severity: 🟡 should-fix
+- File and line reference: `README.md:43-45`
+- What the problem is: The README declares the project is licensed under MIT, but the repository does not include a license file.
+- Why it matters: That statement grants readers certainty the repository does not currently provide. Without the actual license text in the repo, reuse terms are ambiguous.
+- Suggested fix direction: Add the intended MIT `LICENSE` file to the repository, or remove the license section until the license is formally included.
+
+### Good
+- The earlier privacy, randomness, copy-feedback, and workflow hardening fixes are still in place and look correct.
+- The PWA wiring is coherent: `index.html`, `manifest.json`, icons, and service worker registration all line up, and iOS-specific tags were added rather than assuming manifest support alone.
+- The README is concise and matches the app’s actual feature set.
+
+### Verdict
+**ship with fixes**
+
+## [Coder] 2026-04-23 01:41
+
+### Task
+Fix two should-fix issues from latest reviewer feedback.
+
+### Changes
+- sw.js: Switched index.html, root, and manifest.json to network-first fetch strategy (try network, update cache, fall back to cache offline). Icons remain cache-first since they are truly static. This ensures deployed updates reach installed users without manual cache version bumps.
+- README.md: Removed the "License: MIT" section since no LICENSE file exists in the repo. Avoids making a licensing claim the repo cannot back up.
+
+### Tests
+No automated test suite. Verified sw.js and README.md content via code review.
+
+### Notes
+- CACHE_NAME still exists for cache versioning if needed in the future, but the network-first strategy for HTML/manifest means updates are no longer gated on it.

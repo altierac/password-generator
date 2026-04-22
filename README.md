@@ -40,6 +40,3 @@ sw.js            — service worker (cache-first offline strategy)
 icon-*.svg/png   — app icons in 192px and 512px variants
 ```
 
-## License
-
-MIT
